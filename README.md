@@ -9,42 +9,40 @@ To Implement Transfer Learning for classification using VGG-19 architecture.
 
 ## DESIGN STEPS
 ### STEP 1:
-Import required libraries, load the dataset, and define training & testing datasets.
-</br>
+Collect and preprocess the dataset containing images of defected and non-defected capacitors.
 
 ### STEP 2:
-Initialize the model, loss function, and optimizer. Use CrossEntropyLoss for multi-class classification and Adam optimizer for efficient training.
-</br>
+Split the dataset into training, validation, and test sets.
 
 ### STEP 3:
-Train the model using the training dataset with forward and backward propagation.
-<br/>
+Load the pretrained VGG19 model with weights from ImageNet.
 
 ### STEP 4:
-Train the model using the training dataset with forward and backward propagation.
-<br/>
+Remove the original fully connected (FC) layers and replace the last layer with a single neuron (1 output) with a Sigmoid activation function for binary classification.
 
 ### STEP 5:
-Make predictions on new data using the trained model.
-<br/>
+Train the model using binary cross-entropy loss function and Adam optimizer.
+
+### STEP 6:
+Evaluate the model with test data loader and intepret the evaluation metrics such as confusion matrix and classification report.
 
 ## PROGRAM
 ```python
 # Load Pretrained Model and Modify for Transfer Learning
-from torchvision.models import VGG19_Weights
-model = models.vgg19(weights=VGG19_Weights.DEFAULT
+model = models.vgg19(weights = models.VGG19_Weights.DEFAULT)
+
+for param in model.parameters():
+  param.requires_grad = False
 
 
-# Modify the final fully connected layer to match the dataset classes
-num_classes = len(train_dataset.classes)
-in_features = model.classifier[-1].in_features
-model.classifier[-1] = nn.Linear(in_features,1)
+# Modify the final fully connected layer to match one binary classes
+num_features = model.classifier[-1].in_features
+model.classifier[-1] = nn.Linear(num_features,1)
 
 
 # Include the Loss function and optimizer
-criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.classifier[-1].parameters(), lr=0.001)
-
+criterion = nn.BCELoss()
+optimizer = optim.Adam(model.parameters(),lr=0.001)
 
 
 # Train the model
@@ -58,7 +56,9 @@ def train_model(model, train_loader,test_loader,num_epochs=10):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(images)
-            loss = criterion(outputs, labels.unsqueeze(1).float())
+            outputs = torch.sigmoid(outputs)
+            labels = labels.float().unsqueeze(1)
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
@@ -71,7 +71,9 @@ def train_model(model, train_loader,test_loader,num_epochs=10):
             for images, labels in test_loader:
                 images, labels = images.to(device), labels.to(device)
                 outputs = model(images)
-                loss = criterion(outputs, labels.unsqueeze(1).float() )
+                outputs = torch.sigmoid(outputs)
+                labels = labels.float().unsqueeze(1)
+                loss = criterion(outputs, labels)
                 val_loss += loss.item()
 
         val_losses.append(val_loss / len(test_loader))
@@ -80,8 +82,8 @@ def train_model(model, train_loader,test_loader,num_epochs=10):
         print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {train_losses[-1]:.4f}, Validation Loss: {val_losses[-1]:.4f}')
 
     # Plot training and validation loss
-    print("Name:Rahini A")
-    print("Register Number:212223230165")
+    print("Name: Rahini A")
+    print("Register Number: 212223230165")
     plt.figure(figsize=(8, 6))
     plt.plot(range(1, num_epochs + 1), train_losses, label='Train Loss', marker='o')
     plt.plot(range(1, num_epochs + 1), val_losses, label='Validation Loss', marker='s')
@@ -90,25 +92,28 @@ def train_model(model, train_loader,test_loader,num_epochs=10):
     plt.title('Training and Validation Loss')
     plt.legend()
     plt.show()
-
 ```
 
 ## OUTPUT
 ### Training Loss, Validation Loss Vs Iteration Plot
-![Screenshot 2025-04-07 113943](https://github.com/user-attachments/assets/8f1cc569-4115-47eb-aa9a-751003e24fad)
+![Screenshot 2025-04-16 183133](https://github.com/user-attachments/assets/6578bfca-ba88-43fe-bf33-6c91194be741)
+
 </br>
 
 ### Confusion Matrix
-![Screenshot 2025-04-07 114034](https://github.com/user-attachments/assets/a5b9e59e-7166-4e39-8c10-9f1829528706)
+![Screenshot 2025-04-16 183211](https://github.com/user-attachments/assets/5535e55f-0882-432e-ba2e-1bc319220dab)
+
 </br>
 
 ### Classification Report
-![Screenshot 2025-04-07 114107](https://github.com/user-attachments/assets/eab00f1e-bd1b-453b-820a-e4987a012adc)
+![image](https://github.com/user-attachments/assets/bfbeb936-af9f-4a39-b0ed-3110814f7c7b)
+
 </br>
 
 ### New Sample Prediction
-![Screenshot 2025-04-07 114152](https://github.com/user-attachments/assets/ed5c1292-983e-47d7-a0a9-df7fb855270f)
-![Screenshot 2025-04-07 114158](https://github.com/user-attachments/assets/8f2ff651-c206-4197-9407-d2610d8c3648)
+![image](https://github.com/user-attachments/assets/4e7b351c-e057-4303-a433-449edcae2153)
+![image](https://github.com/user-attachments/assets/61dce3da-098c-4388-af61-30b82a76dd9c)
+
 </br>
 
 ## RESULT
